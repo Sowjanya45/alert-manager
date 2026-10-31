@@ -1,0 +1,28 @@
+# Build output
+target/
+build/
+dist/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Node
+node_modules/
+frontend/.vite/
+
+# Env / secrets (only .env.example is committed)
+.env
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
