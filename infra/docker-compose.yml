@@ -150,6 +150,8 @@ services:
     environment:
       <<: *app-env
       INGEST_URL: http://ingestion-service:8081
+      INCIDENT_URL: http://incident-service:8082
+      KNOWLEDGE_URL: http://knowledge-service:8084
       INGEST_API_KEY: ${INGEST_API_KEY:-dev-ingest-key}
       DEMOCORP_ADMIN_KEY: ${DEMOCORP_ADMIN_KEY:-dev-admin-key}
 
@@ -258,6 +260,34 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=audit
       DB_USER: audit
       DB_PASSWORD: ${AUDIT_DB_PASSWORD:-audit}
+
+  api-gateway:
+    <<: *app
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on: []
+    environment:
+      <<: *app-env
+      INCIDENT_URL: http://incident-service:8082
+      REMEDIATION_URL: http://remediation-service:8085
+      KNOWLEDGE_URL: http://knowledge-service:8084
+      AUDIT_URL: http://audit-service:8086
+      DEMOCORP_URL: http://democorp-bank:8090
+
+  frontend:
+    profiles: ["apps"]
+    build: ../frontend
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
 
 volumes:
   pgdata:

@@ -16,6 +16,9 @@ server:
   port: 8082
 
 warroom:
+  security:
+    # /internal/** is only reachable inside the Docker network (the gateway does not route it).
+    public-paths: ["/internal/**"]
   correlation:
     # Open incidents updated within this window are candidates for new signals
     window: 15m
