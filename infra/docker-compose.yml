@@ -2,7 +2,7 @@
 #
 #   Infrastructure only:   docker compose -f infra/docker-compose.yml up -d
 #   Infrastructure + apps: docker compose -f infra/docker-compose.yml --profile apps up -d --build
-#   (build the jars first:  ./mvnw -DskipTests package)
+#   (Java is compiled inside Docker - see Dockerfile.service)
 #
 # Ollama runs on the host (http://localhost:11434); containers reach it via host.docker.internal.
 # All passwords below are local development defaults - override them in infra/.env.
@@ -139,7 +139,11 @@ services:
   democorp-bank:
     <<: *app
     profiles: ["apps"]
-    build: ../democorp-bank
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: democorp-bank
     ports:
       - "8090:8090"
     depends_on: []
@@ -152,7 +156,11 @@ services:
   ingestion-service:
     <<: *app
     profiles: ["apps"]
-    build: ../ingestion-service
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: ingestion-service
     ports:
       - "8081:8081"
     environment:
@@ -165,7 +173,11 @@ services:
   incident-service:
     <<: *app
     profiles: ["apps"]
-    build: ../incident-service
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: incident-service
     ports:
       - "8082:8082"
     environment:
@@ -173,6 +185,79 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=incident
       DB_USER: incident
       DB_PASSWORD: ${INCIDENT_DB_PASSWORD:-incident}
+
+  knowledge-service:
+    <<: *app
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: knowledge-service
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *app-env
+      DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=knowledge,public
+      DB_USER: knowledge
+      DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:-knowledge}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+
+  agent-service:
+    <<: *app
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: agent-service
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *app-env
+      DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=agent
+      DB_USER: agent
+      DB_PASSWORD: ${AGENT_DB_PASSWORD:-agent}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL_QUERY: http://loki:3100
+      KNOWLEDGE_URL: http://knowledge-service:8084
+
+  remediation-service:
+    <<: *app
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: remediation-service
+    ports:
+      - "8085:8085"
+    environment:
+      <<: *app-env
+      DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=remediation
+      DB_USER: remediation
+      DB_PASSWORD: ${REMEDIATION_DB_PASSWORD:-remediation}
+      DEMOCORP_URL: http://democorp-bank:8090
+      DEMOCORP_ADMIN_KEY: ${DEMOCORP_ADMIN_KEY:-dev-admin-key}
+      PROMETHEUS_URL: http://prometheus:9090
+      APPROVAL_SIGNING_KEY: ${APPROVAL_SIGNING_KEY:-dev-approval-signing-key-change-me}
+
+  audit-service:
+    <<: *app
+    profiles: ["apps"]
+    build:
+      context: ..
+      dockerfile: Dockerfile.service
+      args:
+        MODULE: audit-service
+    ports:
+      - "8086:8086"
+    environment:
+      <<: *app-env
+      DB_URL: jdbc:postgresql://postgres:5432/warroom?currentSchema=audit
+      DB_USER: audit
+      DB_PASSWORD: ${AUDIT_DB_PASSWORD:-audit}
 
 volumes:
   pgdata:

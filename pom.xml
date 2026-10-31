@@ -23,6 +23,10 @@
         <module>democorp-bank</module>
         <module>ingestion-service</module>
         <module>incident-service</module>
+        <module>knowledge-service</module>
+        <module>agent-service</module>
+        <module>remediation-service</module>
+        <module>audit-service</module>
     </modules>
 
     <properties>

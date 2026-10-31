@@ -1,0 +1,7 @@
+# Keep LF in the repo; shell scripts and Docker files must stay LF on every OS.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.jar binary
+*.zip binary
+*.png binary
